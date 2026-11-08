@@ -39,7 +39,7 @@ walter : Foundation -> List String
 walter premises =
     case premises of
         NotRevisited ->
-            [ "Noel Arifesi, 1950. Savaş biteli beş yıl oldu ve dükkân hâlâ darmadağın. Tahta izni sonunda çıktı. Bütün hafta için dört tahta ve 10 sterlin. Hepsini yeniden açılış için gösterişli yeni bir tabelaya harcadım. Harika görünüyordu. Sonra çarşamba yağmuru çatıdan girip kurtardığımız bütün kitapların üstüne yağdı."
+            [ "Noel Arifesi, 1950. Savaş biteli beş yıl oldu ve dükkân hâlâ darmadağın. Savaştan sonra tahta hâlâ karneyle veriliyor, bizim payımız sonunda çıktı. Bütün hafta için dört tahta ve 10 sterlin. Hepsini yeniden açılış için gösterişli yeni bir tabelaya harcadım. Harika görünüyordu. Sonra çarşamba yağmuru çatıdan girip kurtardığımız bütün kitapların üstüne yağdı."
             , "Daha çok vaktimiz var sanmıştım."
             ]
 
@@ -95,7 +95,7 @@ edwin onlineService =
             "Aralık 1998. Ruth, kızı Lucy’nin bir zamanlar çok sevdiği bir kitabı bulmamızı istedi. Rafları aradım ve bir tane gönderdim; yanlış nüshaydı. Ruth nazik bir cevap yazdı. Bir daha aramayı teklif etmedim ve fikir orada kaldı."
 
         Established ->
-            "Aralık 1998. Ruth, kızı Lucy’nin bir zamanlar çok sevdiği bir kitabı bulmamızı istedi ve bulduk: doğru resim, doğru satır, doğru ithaf. Ertesi gün babamla internete bir sayfa koyduk. E-postalar o günden beri durmadı."
+            "Aralık 1998. Ruth, kızı Lucy’nin bir zamanlar çok sevdiği bir kitabı bulmamızı istedi ve bulduk: doğru resim, doğru satır, doğru el yazısı not. Ertesi gün babamla internete bir sayfa koyduk. E-postalar o günden beri durmadı."
 
 
 edwinReading : Foundation -> String

@@ -32,7 +32,7 @@ label hotspot =
             "Tamir haftasını planla"
 
         ShelfSpot ->
-            "Açılış rafını düzenle"
+            "Açılış rafını sırala"
 
         StageSpot ->
             "Gölge sahnesini kur"
@@ -93,7 +93,7 @@ clueLabel clue =
             "Lucy’nin hatırladığı satırı oku"
 
         InscriptionClue ->
-            "İthafla ilgili nota bak"
+            "El yazısı notla ilgili ipucuna bak"
 
         CandidatePage candidate tab ->
             tabVerb tab ++ (Mystery.candidate candidate).label
@@ -109,4 +109,4 @@ tabVerb tab =
             "Metni oku: "
 
         DedicationTab ->
-            "İthafı oku: "
+            "El yazısı notu oku: "

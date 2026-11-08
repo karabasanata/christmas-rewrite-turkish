@@ -12,7 +12,7 @@ book : BookId -> BookContent
 book bookId =
     case bookId of
         Recoverable AtlasOfSmallPlaces ->
-            { title = "Küçük Yerler Atlası", damage = [] }
+            { title = "Minik Yerler Atlası", damage = [] }
 
         Recoverable BirdsongForBeginners ->
             { title = "Yeni Başlayanlara Kuş Sesleri", damage = [ SmokeStains ] }

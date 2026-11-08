@@ -66,7 +66,7 @@ view world order puzzle notice =
             ]
         , if isReviewing then
             Common.feedback
-                { title = "Hafta tutmadı. Ters gidenler şunlar:"
+                { title = "Bu plan işe yaramadı. Ters gidenler şunlar:"
                 , note = "Bir hakkın daha var. Kartların oldukları yerde kalır."
                 }
                 numbered
@@ -151,7 +151,7 @@ notThisWeek config =
             config.enabled && config.placement.selected /= Nothing
 
         space index slot =
-            PlacementUI.slot config ("Bu hafta değil, " ++ String.fromInt (index + 1) ++ ". boşluk") slot
+            PlacementUI.slot config ("Bu hafta yapılmayacak, " ++ String.fromInt (index + 1) ++ ". boşluk") slot
     in
     div [ class "not-this-week" ]
         [ button
@@ -160,7 +160,7 @@ notThisWeek config =
             , disabled (not holding)
             , onClick (BoardMove (PlaceSelectedInGroup Rules.Repair.notThisWeekSlots))
             ]
-            [ text "Bu hafta değil" ]
+            [ text "Bu hafta yapılmayacak" ]
         , div [ class "not-this-week__slots" ] (List.indexedMap space Rules.Repair.notThisWeekSlots)
         ]
 
@@ -289,7 +289,7 @@ ledger placement numbered =
                 numbered
     in
     div [ class "paper-note" ]
-        [ h3 [ class "paper-note__title" ] [ text "Bu haftanın payı" ]
+        [ h3 [ class "paper-note__title" ] [ text "Bu hafta elindekiler" ]
         , resource "Tahta" "" timberMark spent.timber left.timber Rules.Repair.budget.timber
         , resource "Para" "£" moneyMark spent.pounds left.pounds Rules.Repair.budget.pounds
         ]

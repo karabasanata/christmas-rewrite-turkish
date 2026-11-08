@@ -13,7 +13,7 @@ taskCard task =
     case task of
         PatchRoof ->
             { title = "Çatıyı yamala"
-            , note = "Çarşamba yağmurundan önce yapılmalı."
+            , note = "Çarşamba yağmur yağacak. Çatı ondan önce, yani çarşambadan önceki bir gün yamanmalı."
             }
 
         ClearRubble ->
@@ -22,7 +22,7 @@ taskCard task =
             }
 
         BuildShelves ->
-            { title = "Raf yap"
+            { title = "Rafları yap"
             , note = "Ancak moloz temizlendikten sonra. Kitaplar bunları bekliyor."
             }
 
@@ -33,7 +33,7 @@ taskCard task =
 
         ReglazeWindow ->
             { title = "Pencereye cam tak"
-            , note = "Yeni cam çarşamba günü teslim ediliyor."
+            , note = "Yeni cam çarşamba sabahı geliyor. Daha önce takılamaz."
             }
 
         PaintSign ->
@@ -43,7 +43,7 @@ taskCard task =
 
         BoardUpWindow ->
             { title = "Pencereyi tahtayla kapat"
-            , note = "Kırık pencereyi tahtalarla kapatır."
+            , note = "Kırık pencereyi tahtalarla kapatır; rüzgâr ve yağmur girmez."
             }
 
 
@@ -54,7 +54,7 @@ goal reopeningGoal =
             "Su geçirmeyen bir çatı"
 
         SealedWindow ->
-            "Kapatılmış bir pencere"
+            "Rüzgâr ve yağmur girmeyen bir pencere"
 
         UsableShelves ->
             "Kullanılabilir raflar"

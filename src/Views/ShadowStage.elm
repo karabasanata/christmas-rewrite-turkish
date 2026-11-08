@@ -58,7 +58,7 @@ view world puzzle notice =
             ]
         , if isReviewing then
             Common.feedback
-                { title = "Hikâye bir araya gelmedi. Ters gidenler şunlar:"
+                { title = "Hikâye anlaşılmadı. Ters gidenler şunlar:"
                 , note = "Bir hakkın daha var. Figürlerin oldukları yerde kalır."
                 }
                 numbered

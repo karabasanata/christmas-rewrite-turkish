@@ -37,7 +37,7 @@ order shelfOrder =
 
         Alphabetical ->
             -- Turkish titles, A–Z in the Turkish alphabet: Bahçede Kış, Cep Dolusu
-            -- Harikalar, Denizden Mektuplar, Kış Masalları, Küçük Yerler Atlası,
+            -- Harikalar, Denizden Mektuplar, Kış Masalları, Minik Yerler Atlası,
             -- Yeni Başlayanlara Kuş Sesleri.
             [ GardensInWinter, PocketOfWonders, LettersFromTheSea, WinterTales, AtlasOfSmallPlaces, BirdsongForBeginners ]
 

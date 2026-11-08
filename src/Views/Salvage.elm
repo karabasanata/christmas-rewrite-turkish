@@ -35,7 +35,7 @@ view books placement notice =
             )
         , div [ class "crates" ]
             [ crate config Fine "Sağlam" "Hiç hasar yok"
-            , crate config NeedsRepair "Tamir gerek" "Yalnızca duman ya da su hasarı"
+            , crate config NeedsRepair "Tamir edilebilir" "Yalnızca duman ya da su hasarı"
             , crate config TooFarGone "Kurtarılamaz" "Yanmış ya da sayfaları eksik"
             ]
         , PlacementUI.tray config

@@ -84,8 +84,8 @@ clue world clueId =
 
         -- 1950 reopening shelf
         ShelfPlaque ->
-            { title = "Bu kitapları düzenle."
-            , paragraphs = [ "İpucu: Onları düzenlemenin dört farklı yolu var." ]
+            { title = "Bu kitapları rafa sırayla diz."
+            , paragraphs = [ "İpucu: Bunları sıralamanın dört farklı yolu var." ]
             }
 
         -- 1973
@@ -96,7 +96,7 @@ clue world clueId =
             stageSketch world.scriptVariant
 
         CutoutBox ->
-            { title = "Kesik figür kutusu"
+            { title = "Karton figür kutusu"
             , paragraphs =
                 [ "Altı karton figür: bir tilki, bir baykuş ve bir çocuk; bir fener, bir anahtar ve bir kitap."
                 , "Her sahneye bir karakter ve bir eşya gerekir. Her figür bir kez kullanılır."
@@ -254,7 +254,7 @@ inscription source =
             { title = "1973 gölge oyunundan bir fotoğraf"
             , paragraphs =
                 [ "Dükkânın arşivinden: ön sırada Ruth ve Lucy."
-                , "Arkasında Henry’nin notu: “Ruth, kızına verdiği her kitaba ‘Lucy’ye, sevgilerle, Annen’ yazar.”"
+                , "Arkasında Henry’nin notu: “Ruth, kızına verdiği her kitabın ön kapağının içine ‘Lucy’ye, sevgilerle, Annen’ yazar.”"
                 ]
             }
 
@@ -280,4 +280,4 @@ candidatePage candidateId tab =
             { title = content.label ++ ": metin", paragraphs = [ content.text ] }
 
         DedicationTab ->
-            { title = content.label ++ ": ithaf", paragraphs = [ content.dedication ] }
+            { title = content.label ++ ": el yazısı not", paragraphs = [ content.dedication ] }

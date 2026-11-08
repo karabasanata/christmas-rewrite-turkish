@@ -135,7 +135,7 @@ consequence era broken =
                         "Paket Ruth’a ulaşıyor ama Lucy’nin hatırladığı satır içinde yok. Bu Lucy’nin nüshası değil."
 
                     DetailDoesNotMatch LucyInscription ->
-                        "Paket Ruth’a ulaşıyor ama ithaf başka birine yazılmış. Bu Lucy’nin nüshası değil."
+                        "Paket Ruth’a ulaşıyor ama kapağın içindeki not başka birine yazılmış. Bu Lucy’nin nüshası değil."
 
                     _ ->
                         "Paket Ruth’a ulaşıyor ama bu Lucy’nin nüshası değil."

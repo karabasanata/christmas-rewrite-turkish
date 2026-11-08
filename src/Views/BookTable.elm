@@ -75,7 +75,7 @@ clues =
 help : List (Html Msg)
 help =
     Common.helpButton "Kitaplara dön"
-        [ "Her kitabın içine bak: resmine, metnine ve ithafına. Bakmak hiçbir şeye mal olmaz."
+        [ "Her kitabın içine bak: resmine, metnine ve kapağın içindeki el yazısı nota. Bakmak hiçbir hak harcamaz."
         , "Ruth’un e-postasını ve yanındaki notları istediğin kadar oku."
         , "Lucy’nin olduğunu düşündüğün kitabı seç, sonra Bu kitabı gönder’e bas. Tek hakkın var: yanlış kitapsa geri alınamaz."
         ]
@@ -130,7 +130,7 @@ candidateCard puzzle isReviewing numbered candidate =
                , div [ class "candidate__tabs", attribute "role" "group", attribute "aria-label" ("İçine bak: " ++ content.label) ]
                     [ tab CoverTab "Resim"
                     , tab TextTab "Metin"
-                    , tab DedicationTab "İthaf"
+                    , tab DedicationTab "El yazısı not"
                     ]
                , button
                     [ type_ "button"

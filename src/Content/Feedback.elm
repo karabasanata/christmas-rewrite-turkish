@@ -33,7 +33,7 @@ violation broken =
             "“" ++ (Repair.taskCard first).title ++ "” işi, “" ++ (Repair.taskCard second).title ++ "” işinden daha önceki bir gün yapılmalı."
 
         TimberOverspent total ->
-            "Bu hafta " ++ String.fromInt total ++ " tahta kullanılıyor ama izin yalnızca " ++ String.fromInt Rules.Repair.budget.timber ++ " tahta için."
+            "Bu hafta " ++ String.fromInt total ++ " tahta kullanılıyor ama elde yalnızca " ++ String.fromInt Rules.Repair.budget.timber ++ " tahta var."
 
         MoneyOverspent total ->
             "Bu hafta £" ++ String.fromInt total ++ " tutuyor ama harcanacak yalnızca £" ++ String.fromInt Rules.Repair.budget.pounds ++ " var."
@@ -51,7 +51,7 @@ violation broken =
             "Kurtarılan kitaplar bu hafta hiç rafa dizilmiyor."
 
         SceneConflictsWithScript scene ->
-            sceneName scene ++ ", hikâyede orada olanla uyuşmuyor."
+            sceneName scene ++ ", metinde o sahnede olanla uyuşmuyor."
 
         DetailDoesNotMatch FoxLanternIllustration ->
             "Bu kitabın resmi, taş bir köprünün altında fener taşıyan tilki değil."
@@ -60,7 +60,7 @@ violation broken =
             "Bu kitapta Lucy’nin hatırladığı satır yok."
 
         DetailDoesNotMatch LucyInscription ->
-            "Bu kitaptaki ithaf, Ruth’un yazdığı ithaf değil."
+            "Bu kitabın kapağının içindeki el yazısı not, Ruth’un yazdığı not değil."
 
 
 {-| Neutral messages. None of them says anything about correctness. -}

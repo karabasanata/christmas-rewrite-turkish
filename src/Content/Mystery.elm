@@ -32,7 +32,7 @@ candidate candidateId =
             { label = "Tilki ile Fener, okul baskısı"
             , cover = "Kütüphane damgalı sert karton kapak. İçinde tam sayfa bir resim var: taş bir köprünün altında fener taşıyan bir tilki."
             , text = "“…ve tilki yağan karın içinde yürümeye devam etti. Fener, son yolcu eve dönene kadar yanık kaldı.” Altında: Sınıf için sorular."
-            , dedication = "Ön kapağın içinde mavi mürekkeple elle yazılmış: “Peter’a, sevgilerle, Baban.”"
+            , dedication = "Ön kapağın içinde mavi mürekkeple elle yazılmış: “Peter’e, sevgilerle, Baban.”"
             }
 
         CandidateC ->

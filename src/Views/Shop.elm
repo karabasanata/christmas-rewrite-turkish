@@ -58,7 +58,7 @@ presentHub world history =
                         eraYear era ++ " günlüğü tezgâhta parlıyor."
 
                     Nothing ->
-                        "Üç günlüğün üçü de kapandı."
+                        "Üç günlük de kapandı."
                 )
     }
 

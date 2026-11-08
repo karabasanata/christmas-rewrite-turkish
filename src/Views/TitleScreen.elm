@@ -57,7 +57,7 @@ menu config =
         note =
             case config.onContinue of
                 Just _ ->
-                    [ attribute "data-note" "Kayıtlı ilerlemenin yerine geçer" ]
+                    [ attribute "data-note" "Kayıtlı oyunun silinir" ]
 
                 Nothing ->
                     []
