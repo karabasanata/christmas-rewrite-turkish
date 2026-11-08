@@ -1,0 +1,193 @@
+module Views.Shop exposing (ending, introduction, openingDiary, presentHub, returning)
+
+{-| What the room-based screens add to the room: introduction, present hub,
+diary openings and endings.
+-}
+
+import Components.Art as Art
+import Content.Diaries
+import Content.Endings
+import Content.Intro
+import Domain exposing (..)
+import Html exposing (Html, button, div, footer, h2, h3, header, img, p, section, span, text)
+import Html.Attributes exposing (alt, attribute, class, classList, disabled, src, type_)
+import Html.Events exposing (onClick)
+import Timeline
+import Views.Common as Common
+import Views.Labels exposing (eraYear, yearFrom, yearObject, yearTo)
+import Views.Room
+
+
+advanceButton : String -> Html Msg
+advanceButton label =
+    button [ type_ "button", class "btn", onClick Advance ] [ text label ]
+
+
+{-| While packing up the player walks: the box is a hotspot, so the words move to
+the top of the room and nothing here advances the story.
+-}
+introduction : IntroStep -> List (Html Msg)
+introduction step =
+    let
+        narrate buttonLabel =
+            [ Common.narration (Content.Intro.step step) (advanceButton buttonLabel) ]
+    in
+    case step of
+        PackingUp ->
+            [ Common.roomNote (Content.Intro.step step) ]
+
+        DiariesFound ->
+            narrate "Bir şans daha dile"
+
+        ClockStopped ->
+            narrate "Günlüklere bak"
+
+
+presentHub : World -> History -> Views.Room.Scene
+presentHub world history =
+    let
+        emptyScene =
+            Views.Room.emptyScene
+    in
+    { emptyScene
+        | behind = [ div [ class "diaries" ] (List.map (diary world history) Timeline.eras) ]
+        , line =
+            Just
+                (case world.nextDiary of
+                    Just era ->
+                        eraYear era ++ " günlüğü tezgâhta parlıyor."
+
+                    Nothing ->
+                        "Üç günlüğün üçü de kapandı."
+                )
+    }
+
+
+diary : World -> History -> Era -> Html Msg
+diary world history era =
+    let
+        isNext =
+            world.nextDiary == Just era
+
+        owner =
+            case era of
+                Repairs1950 ->
+                    "Walter’ın günlüğü"
+
+                Shadows1973 ->
+                    "Henry’nin günlüğü"
+
+                Search1998 ->
+                    "Edwin’in defteri"
+
+        state =
+            if isNext then
+                "open"
+
+            else if Timeline.recordFor era history /= Nothing then
+                "closed"
+
+            else
+                "waiting"
+    in
+    button
+        [ type_ "button"
+        , classList [ ( "diary", True ), ( "is-glowing", isNext ) ]
+        , attribute "aria-label" (owner ++ ", " ++ eraYear era ++ ": " ++ state)
+        , disabled (not isNext)
+        , onClick (ApproachHotspot DiarySpot)
+        ]
+        [ Art.diaryCover era
+        , span [ class "diary__year" ] [ text (eraYear era) ]
+        ]
+
+
+openingDiary : World -> Era -> List (Html Msg)
+openingDiary world era =
+    [ Art.room
+    , Common.documentSheet
+        { variant = "sheet--diary"
+        , document = Content.Diaries.passage world era
+        , picture = Nothing
+        , buttonLabel = yearTo era ++ " adım at"
+        , onPress = Advance
+        }
+    ]
+
+
+{-| The contract has no Content function for this moment, so the words live here
+for now.
+-}
+returning : List (Html Msg)
+returning =
+    [ Common.narration
+        { title = "Bugüne dönüş"
+        , paragraphs = [ "Sayfalar duruluyor. Oda, Edwin’in etrafında eski hâline dönüyor ve saat hâlâ kıpırdamadı." ]
+        }
+        (advanceButton "Dükkâna göz gezdir")
+    ]
+
+
+{-| The fate of the shop once all three chapters are resolved. A closed shop
+lists what each failed chapter left missing, under that chapter's heading; the
+saved ending is one document, already titled by the sheet.
+-}
+ending : World -> List (Html Msg)
+ending world =
+    let
+        documents =
+            case world.fate of
+                Just (ShopClosed failedEras) ->
+                    List.map Content.Endings.missing failedEras
+
+                _ ->
+                    [ Content.Endings.saved ]
+
+        section_ document =
+            (if document.title == title then
+                []
+
+             else
+                [ h3 [] [ text document.title ] ]
+            )
+                ++ List.map (\paragraph -> p [] [ text paragraph ]) document.paragraphs
+
+        title =
+            case world.fate of
+                Just (ShopClosed _) ->
+                    "Dükkân kapanıyor"
+
+                _ ->
+                    Content.Endings.saved.title
+
+        reopen era =
+            button [ type_ "button", class "btn", onClick (ReopenDiary era) ] [ text (yearObject era ++ " yeniden aç") ]
+
+        -- The saved ending: Ruth, Lucy and Lucy's daughter coming in out of
+        -- the snow, beside the words.
+        ( sheetClass, body ) =
+            case world.fate of
+                Just (ShopClosed _) ->
+                    ( "sheet", List.concatMap section_ documents )
+
+                _ ->
+                    ( "sheet sheet--saved"
+                    , [ div [ class "ending" ]
+                            [ img [ class "ending__picture", src "assets/ending-visitors.svg", alt "" ] []
+                            , div [ class "ending__text" ] (List.concatMap section_ documents)
+                            ]
+                      ]
+                    )
+    in
+    [ Art.room
+    , div [ class "overlay" ]
+        [ section [ class sheetClass, attribute "role" "dialog", attribute "aria-modal" "true" ]
+            [ header [ class "sheet__head" ] [ h2 [ class "sheet__title" ] [ text title ] ]
+            , div [ class "sheet__body" ] body
+            , footer [ class "sheet__foot sheet__foot--ending" ]
+                (List.map reopen Timeline.eras
+                    ++ [ button [ type_ "button", class "btn", onClick StartAgain ] [ text "Baştan başla" ] ]
+                )
+            ]
+        ]
+    ]

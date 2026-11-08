@@ -1,0 +1,186 @@
+module Views.ShadowStage exposing (view)
+
+{-| 1973 main puzzle: three numbered scene panels, each with a character slot and
+a prop slot, and the six cut-outs in the tray. Before a submission this shows
+the arrangement only. Everything about correctness comes from puzzle.attempts,
+never from calling the validator or the script.
+-}
+
+import Components.Art as Art
+import Components.Placement as PlacementUI
+import Content.Shadow
+import Content.Words exposing (sceneName)
+import Domain exposing (..)
+import Html exposing (Html, aside, div, h3, header, section, span, text)
+import Html.Attributes exposing (attribute, class, classList, disabled)
+import Html.Events exposing (onClick)
+import Rules.Placement
+import Rules.Shadow
+import Views.Common as Common
+
+
+type alias Puzzle =
+    MainPuzzle (Placement Cutout ShadowSlot)
+
+
+view : World -> Puzzle -> Maybe Notice -> List (Html Msg)
+view world puzzle notice =
+    let
+        reviewing =
+            Common.reviewedViolations puzzle.attempts
+
+        numbered =
+            Common.numbered reviewing
+
+        isReviewing =
+            not (List.isEmpty reviewing)
+
+        config =
+            placementConfig puzzle isReviewing
+    in
+    [ div [ class "board-scene stage-scene" ]
+        [ Common.topbar "1973"
+            "Gölge Oyunu"
+            (Common.attemptsDisplay puzzle.attempts
+                :: Common.lastTryNotes "Sahneye dön" puzzle.attempts
+                ++ help
+                ++ [ Common.closePanel (not isReviewing) ]
+            )
+        , section [ class "story-stage", attribute "aria-label" "Gölge sahnesi" ]
+            (List.map (scenePanel world config numbered) Rules.Shadow.scenes)
+        , aside [ class "side" ]
+            [ div [ class "paper-note" ]
+                [ h3 [ class "paper-note__title" ] [ text "Gösteriden önce" ]
+                , div [ class "side-clues" ] (List.map (Common.clueNote world puzzle.inspected) clues)
+                ]
+            , Common.statusLine notice (hint puzzle isReviewing)
+            , Common.primaryButton [ disabled isReviewing, onClick Submit ] "Hikâyeyi oyna"
+            ]
+        , if isReviewing then
+            Common.feedback
+                { title = "Hikâye bir araya gelmedi. Ters gidenler şunlar:"
+                , note = "Bir hakkın daha var. Figürlerin oldukları yerde kalır."
+                }
+                numbered
+
+          else
+            PlacementUI.tray config
+        ]
+    ]
+
+
+clues : List ClueId
+clues =
+    [ ShadowScript, StageSketch, CutoutBox ]
+
+
+help : List (Html Msg)
+help =
+    Common.helpButton "Sahneye dön"
+        [ "Bir figürü almak için üstüne tıkla, sonra bir sahnedeki boşluğa tıkla. Yer değiştirmek için dolu bir boşluğa tıkla."
+        , "Her sahneye bir karakter ve bir eşya konur ve her figür bir kez kullanılır."
+        , "Metni, taslağı ve kutuyu istediğin kadar oku. Bakmak ve yeniden düzenlemek hiçbir zaman hak harcamaz."
+        , "Her boşluk dolduğunda Hikâyeyi oyna’ya bas. İki hakkın var."
+        ]
+
+
+placementConfig : Puzzle -> Bool -> PlacementUI.Config Cutout ShadowSlot Msg
+placementConfig puzzle isReviewing =
+    { toMsg = StageMove
+    , enabled = not isReviewing
+    , placement = puzzle.arrangement
+    , items = trayOrder
+    , name = Content.Shadow.cutoutName
+    , cardClass = \_ -> "cutout"
+    , cardBody = cutoutBody
+    , marks = \_ -> []
+    }
+
+
+cutoutBody : Cutout -> List (Html Msg)
+cutoutBody cutout =
+    [ Art.cutout cutout
+    , span [ class "cutout__name" ] [ text (Content.Shadow.cutoutName cutout) ]
+    ]
+
+
+{-| The setting is the stage sketch's label for the panel. The performance
+captions belong to the slideshow, so they never show while arranging. Marks
+appear only after a submission, on the scenes the feedback names.
+-}
+scenePanel : World -> PlacementUI.Config Cutout ShadowSlot Msg -> List ( String, Violation ) -> Scene -> Html Msg
+scenePanel world config numbered scene =
+    let
+        setting =
+            (Content.Shadow.scene world.scriptVariant scene).setting
+
+        marks =
+            List.filterMap
+                (\( mark, violation ) ->
+                    if violation == SceneConflictsWithScript scene then
+                        Just mark
+
+                    else
+                        Nothing
+                )
+                numbered
+
+        space kind slotId =
+            div [ class "story-panel__space" ]
+                [ span [ class "story-panel__kind" ] [ text kind ]
+                , PlacementUI.slot config (sceneName scene ++ ", " ++ String.toLower kind) slotId
+                ]
+    in
+    section
+        [ classList [ ( "story-panel", True ), ( "is-flagged", not (List.isEmpty marks) ) ]
+        , attribute "aria-label" (sceneName scene ++ ": " ++ setting)
+        ]
+        [ header [ class "story-panel__head" ]
+            (List.map (\mark -> span [ class "mark mark--inline" ] [ text mark ]) marks
+                ++ [ span [ class "story-panel__number" ] [ text (sceneName scene) ]
+                   , span [ class "story-panel__setting" ] [ text setting ]
+                   ]
+            )
+        , div [ class "story-panel__sheet" ]
+            [ space "Karakter" (CharacterSlot scene)
+            , space "Eşya" (PropSlot scene)
+            ]
+        ]
+
+
+hint : Puzzle -> Bool -> String
+hint puzzle isReviewing =
+    let
+        unplaced =
+            List.length (Rules.Placement.inTray Rules.Shadow.allCutouts puzzle.arrangement)
+    in
+    if isReviewing then
+        "Aşağıdaki notları oku, sonra tekrar dene."
+
+    else
+        case puzzle.arrangement.selected of
+            Just cutout ->
+                Content.Shadow.cutoutName cutout ++ " için bir boşluğa tıkla."
+
+            Nothing ->
+                if unplaced == 0 then
+                    "Her figürün bir yeri var. Hazır olduğunda hikâyeyi oyna."
+
+                else
+                    String.fromInt unplaced ++ " figür tepside. Bir figüre tıkla, sonra bir sahnedeki boşluğa tıkla."
+
+
+{-| The tray's cut-outs, mixed up once and kept. Not characters-then-props,
+and no scene's character sits next to its prop in either script (Fox and
+Lantern, Owl and Key, Child and Book, Child and Key, Owl and Book), so the tray
+never hints at an answer.
+-}
+trayOrder : List Cutout
+trayOrder =
+    [ PropCutout Lantern
+    , CharacterCutout Child
+    , CharacterCutout Owl
+    , CharacterCutout Fox
+    , PropCutout Key
+    , PropCutout Book
+    ]

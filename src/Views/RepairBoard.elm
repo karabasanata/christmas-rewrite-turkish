@@ -1,0 +1,447 @@
+module Views.RepairBoard exposing (view)
+
+{-| 1950 main puzzle. Before a submission this shows arithmetic only. Everything
+about correctness comes from puzzle.attempts, never from calling the validator.
+-}
+
+import Components.Art as Art
+import Components.Placement as PlacementUI
+import Content.Repair
+import Content.Words exposing (dayName)
+import Domain exposing (..)
+import Html exposing (Html, aside, button, div, h3, li, section, span, text, ul)
+import Html.Attributes exposing (attribute, class, classList, disabled, type_)
+import Html.Events exposing (onClick)
+import Rules.Placement
+import Rules.Repair
+import Views.Common as Common
+
+
+type alias Puzzle =
+    MainPuzzle (Placement TaskId RepairSlot)
+
+
+{-| `order` is this game's tray order for the task cards
+(Rules.BookTrays.tasks, from the run seed).
+-}
+view : World -> List TaskId -> Puzzle -> Maybe Notice -> List (Html Msg)
+view world order puzzle notice =
+    let
+        placement =
+            puzzle.arrangement
+
+        reviewing =
+            Common.reviewedViolations puzzle.attempts
+
+        numbered =
+            Common.numbered reviewing
+
+        config =
+            placementConfig order puzzle numbered
+
+        isReviewing =
+            not (List.isEmpty reviewing)
+    in
+    [ div [ class "board-scene" ]
+        [ Common.topbar "1950"
+            "Tamir Haftası"
+            (Common.attemptsDisplay puzzle.attempts :: Common.lastTryNotes "Panoya dön" puzzle.attempts ++ help ++ [ Common.closePanel (not isReviewing) ])
+        , section [ class "cork", attribute "aria-label" "Planlama panosu" ]
+            [ div [ class "days" ] (List.map (dayColumn config) Rules.Repair.days)
+            , div [ class "cork__lower" ]
+                [ notThisWeek config
+                , div [ class "clues" ] (List.map (Common.clueNote world puzzle.inspected) clues)
+                ]
+            , if isReviewing then
+                Art.arrows (List.filterMap (arrowFor placement) reviewing)
+
+              else
+                text ""
+            ]
+        , aside [ class "side" ]
+            [ ledger placement numbered
+            , goals numbered isReviewing
+            , Common.statusLine notice (hint puzzle isReviewing)
+            , Common.primaryButton [ disabled isReviewing, onClick Submit ] "Haftayı bitir"
+            ]
+        , if isReviewing then
+            Common.feedback
+                { title = "Hafta tutmadı. Ters gidenler şunlar:"
+                , note = "Bir hakkın daha var. Kartların oldukları yerde kalır."
+                }
+                numbered
+
+          else
+            PlacementUI.tray config
+        ]
+    ]
+
+
+placementConfig : List TaskId -> Puzzle -> List ( String, Violation ) -> PlacementUI.Config TaskId RepairSlot Msg
+placementConfig order puzzle numbered =
+    { toMsg = BoardMove
+    , enabled =
+        case puzzle.attempts of
+            ReviewingFirstMistake _ ->
+                False
+
+            _ ->
+                True
+    , placement = puzzle.arrangement
+    , items = order
+    , name = \task -> (Content.Repair.taskCard task).title
+    , cardClass = cover
+    , cardBody = cardBody
+    , marks = \task -> List.filterMap (\( mark, violation ) -> markIf (blamedTask violation == Just task) mark) numbered
+    }
+
+
+markIf : Bool -> String -> Maybe String
+markIf condition mark =
+    if condition then
+        Just mark
+
+    else
+        Nothing
+
+
+help : List (Html Msg)
+help =
+    Common.helpButton "Panoya dön"
+        [ "Bir kartı almak için üstüne tıkla, sonra gitmesi gereken yere tıkla. Yer değiştirmek için dolu bir boşluğa tıkla."
+        , "Panoya iğnelenmiş her şeyi istediğin kadar oku. Bakmak ve yeniden düzenlemek hiçbir zaman hak harcamaz."
+        , "Her kartın bir yeri olduğunda Haftayı bitir’e bas. İki hakkın var."
+        ]
+
+
+hint : Puzzle -> Bool -> String
+hint puzzle isReviewing =
+    let
+        unplaced =
+            List.length (Rules.Placement.inTray Rules.Repair.allTasks puzzle.arrangement)
+    in
+    if isReviewing then
+        "Aşağıdaki notları oku, sonra tekrar dene."
+
+    else
+        case puzzle.arrangement.selected of
+            Just task ->
+                "“" ++ (Content.Repair.taskCard task).title ++ "” kartının gideceği yere tıkla."
+
+            Nothing ->
+                if Rules.Repair.complete puzzle.arrangement /= Nothing then
+                    "Her kartın bir yeri var. Hazır olduğunda haftayı bitir."
+
+                else
+                    String.fromInt unplaced ++ " kart tepside. Bir karta tıkla, sonra gitmesi gereken yere tıkla."
+
+
+dayColumn : PlacementUI.Config TaskId RepairSlot Msg -> Day -> Html Msg
+dayColumn config day =
+    div [ class "day" ]
+        [ span [ class "day__label" ] [ text (dayName day) ]
+        , PlacementUI.slot config (dayName day) (OnDay day)
+        ]
+
+
+notThisWeek : PlacementUI.Config TaskId RepairSlot Msg -> Html Msg
+notThisWeek config =
+    let
+        holding =
+            config.enabled && config.placement.selected /= Nothing
+
+        space index slot =
+            PlacementUI.slot config ("Bu hafta değil, " ++ String.fromInt (index + 1) ++ ". boşluk") slot
+    in
+    div [ class "not-this-week" ]
+        [ button
+            [ type_ "button"
+            , class "not-this-week__label"
+            , disabled (not holding)
+            , onClick (BoardMove (PlaceSelectedInGroup Rules.Repair.notThisWeekSlots))
+            ]
+            [ text "Bu hafta değil" ]
+        , div [ class "not-this-week__slots" ] (List.indexedMap space Rules.Repair.notThisWeekSlots)
+        ]
+
+
+clues : List ClueId
+clues =
+    [ WalterDiaryPage, GlassDeliverySlip, RubbleAndShelvesNote, BudgetAllocation ]
+
+
+cardBody : TaskId -> List (Html Msg)
+cardBody task =
+    [ span [ class "book__label" ]
+        [ Art.icon (iconName task)
+        , span [ class "book__title" ] [ text (Content.Repair.taskCard task).title ]
+        ]
+    , span [ class "book__cost" ] [ text (costText (Rules.Repair.cost task)) ]
+    ]
+
+
+costText : Resources -> String
+costText cost =
+    case ( cost.pounds > 0, cost.timber > 0 ) of
+        ( True, True ) ->
+            "£" ++ String.fromInt cost.pounds ++ " + " ++ woodPlanks cost.timber
+
+        ( True, False ) ->
+            "£" ++ String.fromInt cost.pounds
+
+        ( False, True ) ->
+            woodPlanks cost.timber
+
+        ( False, False ) ->
+            "Ücretsiz"
+
+
+woodPlanks : Int -> String
+woodPlanks n =
+    if n == 1 then
+        "1 tahta"
+
+    else
+        String.fromInt n ++ " tahta"
+
+
+iconName : TaskId -> String
+iconName task =
+    case task of
+        PatchRoof ->
+            "roof"
+
+        ClearRubble ->
+            "rubble"
+
+        BuildShelves ->
+            "shelves"
+
+        ShelveBooks ->
+            "books"
+
+        ReglazeWindow ->
+            "glass"
+
+        PaintSign ->
+            "sign"
+
+        BoardUpWindow ->
+            "boards"
+
+
+cover : TaskId -> String
+cover task =
+    case task of
+        PatchRoof ->
+            "book--navy"
+
+        ClearRubble ->
+            "book--umber"
+
+        BuildShelves ->
+            "book--forest"
+
+        ShelveBooks ->
+            "book--plum"
+
+        ReglazeWindow ->
+            "book--teal"
+
+        PaintSign ->
+            "book--ochre"
+
+        BoardUpWindow ->
+            "book--slate"
+
+
+ledger : Placement TaskId RepairSlot -> List ( String, Violation ) -> Html Msg
+ledger placement numbered =
+    let
+        spent =
+            Rules.Repair.spent placement
+
+        left =
+            Rules.Repair.remaining placement
+
+        timberMark =
+            List.filterMap
+                (\( mark, violation ) ->
+                    case violation of
+                        TimberOverspent _ ->
+                            Just mark
+
+                        _ ->
+                            Nothing
+                )
+                numbered
+
+        moneyMark =
+            List.filterMap
+                (\( mark, violation ) ->
+                    case violation of
+                        MoneyOverspent _ ->
+                            Just mark
+
+                        _ ->
+                            Nothing
+                )
+                numbered
+    in
+    div [ class "paper-note" ]
+        [ h3 [ class "paper-note__title" ] [ text "Bu haftanın payı" ]
+        , resource "Tahta" "" timberMark spent.timber left.timber Rules.Repair.budget.timber
+        , resource "Para" "£" moneyMark spent.pounds left.pounds Rules.Repair.budget.pounds
+        ]
+
+
+resource : String -> String -> List String -> Int -> Int -> Int -> Html Msg
+resource name unit marks spent left budget =
+    let
+        signed amount =
+            if amount < 0 then
+                "−" ++ unit ++ String.fromInt (abs amount)
+
+            else
+                unit ++ String.fromInt amount
+
+        pip index =
+            span
+                [ classList
+                    [ ( "pip", True )
+                    , ( "is-spent", index < spent && index < budget )
+                    , ( "is-over", index >= budget )
+                    ]
+                ]
+                []
+    in
+    div [ classList [ ( "resource", True ), ( "is-flagged", not (List.isEmpty marks) ) ] ]
+        [ div [ class "resource__line" ]
+            (List.map (\mark -> span [ class "mark mark--inline" ] [ text mark ]) marks
+                ++ [ span [ class "resource__name" ] [ text name ]
+                   , span [ class "resource__figure" ]
+                        [ text (signed spent ++ " harcandı · ")
+                        , Html.b [] [ text (signed left) ]
+                        , text " kaldı"
+                        ]
+                   ]
+            )
+        , div [ class "resource__pips", attribute "aria-hidden" "true" ]
+            (List.map pip (List.range 0 (max spent budget - 1)))
+        ]
+
+
+allGoals : List ReopeningGoal
+allGoals =
+    [ WatertightRoof, SealedWindow, UsableShelves, AllBooksShelved ]
+
+
+goals : List ( String, Violation ) -> Bool -> Html Msg
+goals numbered isReviewing =
+    let
+        goalRow goal =
+            let
+                marks =
+                    List.filterMap (\( mark, violation ) -> markIf (affectedGoal violation == Just goal) mark) numbered
+
+                unmet =
+                    not (List.isEmpty marks)
+            in
+            li
+                [ classList
+                    [ ( "goal", True )
+                    , ( "is-met", isReviewing && not unmet )
+                    , ( "is-unmet", unmet )
+                    ]
+                ]
+                (span []
+                    (text (Content.Repair.goal goal)
+                        :: (if isReviewing then
+                                [ span [ class "visually-hidden" ]
+                                    [ text
+                                        (if unmet then
+                                            " (karşılanmadı)"
+
+                                         else
+                                            " (karşılandı)"
+                                        )
+                                    ]
+                                ]
+
+                            else
+                                []
+                           )
+                    )
+                    :: List.map (\mark -> span [ class "mark mark--inline mark--goal" ] [ text mark ]) marks
+                )
+    in
+    div [ class "paper-note" ]
+        [ h3 [ class "paper-note__title" ] [ text "Yeniden açılış hedefleri" ]
+        , ul [ class "goals" ] (List.map goalRow allGoals)
+        ]
+
+
+{-| Which card a violation's mark sits on. Presentation only: the violation
+itself comes from the model.
+-}
+blamedTask : Violation -> Maybe TaskId
+blamedTask violation =
+    case violation of
+        RoofAfterRain _ ->
+            Just PatchRoof
+
+        GlassNotYetDelivered _ ->
+            Just ReglazeWindow
+
+        MustComeBefore _ second ->
+            Just second
+
+        _ ->
+            Nothing
+
+
+affectedGoal : Violation -> Maybe ReopeningGoal
+affectedGoal violation =
+    case violation of
+        RoofAfterRain _ ->
+            Just WatertightRoof
+
+        GlassNotYetDelivered _ ->
+            Just SealedWindow
+
+        GoalMissing goal ->
+            Just goal
+
+        MustComeBefore ClearRubble _ ->
+            Just UsableShelves
+
+        MustComeBefore _ ShelveBooks ->
+            Just AllBooksShelved
+
+        _ ->
+            Nothing
+
+
+{-| An arrow needs both cards on days. A deferred prerequisite gets only its mark. -}
+arrowFor : Placement TaskId RepairSlot -> Violation -> Maybe ( Int, Int )
+arrowFor placement violation =
+    case violation of
+        MustComeBefore first second ->
+            Maybe.map2 Tuple.pair (dayColumnOf first placement) (dayColumnOf second placement)
+
+        _ ->
+            Nothing
+
+
+dayColumnOf : TaskId -> Placement TaskId RepairSlot -> Maybe Int
+dayColumnOf task placement =
+    case Rules.Placement.slotOf task placement of
+        Just (OnDay day) ->
+            Rules.Repair.days
+                |> List.indexedMap Tuple.pair
+                |> List.filter (\( _, candidate ) -> candidate == day)
+                |> List.head
+                |> Maybe.map Tuple.first
+
+        _ ->
+            Nothing
